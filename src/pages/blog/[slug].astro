@@ -1,0 +1,93 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { Button } from "../../components/ui/button";
+
+const { slug } = Astro.params;
+
+const MOCK_POSTS = [
+    {
+        id: 1,
+        title: "5 Tips for Your First Tattoo Session",
+        content:
+            "Getting your first tattoo is an exciting milestone. Here are some essential tips to make your session go smoothly: 1. Stay Hydrated. 2. Eat a good meal. 3. Wear comfortable clothing. 4. Trust your artist. 5. Relax and breathe.",
+        date: "Dec 28, 2024",
+        image: "https://images.unsplash.com/photo-1590246130796-54238a2995bd?w=600&q=80",
+        slug: "5-tips-first-tattoo",
+    },
+    {
+        id: 2,
+        title: "The Rise of Fine Line Tattoos in Havana",
+        content:
+            "Fine line tattooing has taken Havana by storm. This delicate style requires immense precision and steady hands...",
+        date: "Dec 20, 2024",
+        image: "https://images.unsplash.com/photo-1562962230-16e4623d36e6?w=600&q=80",
+        slug: "fine-line-tattoos-havana",
+    },
+    {
+        id: 3,
+        title: "Aftercare 101: Keeping Your Ink Fresh",
+        content:
+            "Your tattoo is an investment. Protect it with proper aftercare. Use fragrance-free lotion, avoid sun exposure, and keep it clean...",
+        date: "Dec 15, 2024",
+        image: "https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=600&q=80",
+        slug: "aftercare-101",
+    },
+];
+
+const post = MOCK_POSTS.find((p) => p.slug === slug);
+
+if (!post) {
+    return Astro.redirect("/404");
+}
+---
+
+<Layout title={`${post.title} - InkLink Blog`}>
+    <main class="min-h-screen bg-white dark:bg-black pt-20 pb-20">
+        <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-8">
+                <Button
+                    variant="link"
+                    className="pl-0 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                    asChild
+                >
+                    <a href="/blog">← Back to Blog</a>
+                </Button>
+            </div>
+
+            <header class="mb-10 text-center">
+                <div
+                    class="text-sm text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mb-3"
+                >
+                    {post.date}
+                </div>
+                <h1
+                    class="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white mb-6 leading-tight"
+                >
+                    {post.title}
+                </h1>
+            </header>
+
+            <div
+                class="aspect-video w-full rounded-2xl overflow-hidden mb-12 bg-zinc-100 dark:bg-zinc-800"
+            >
+                <img
+                    src={post.image}
+                    alt={post.title}
+                    class="w-full h-full object-cover"
+                />
+            </div>
+
+            <div class="prose prose-lg dark:prose-invert mx-auto">
+                <p
+                    class="text-xl leading-relaxed text-zinc-700 dark:text-zinc-300"
+                >
+                    {post.content}
+                </p>
+                <p class="mt-8 text-zinc-500 italic">
+                    (This is a placeholder content for the blog post
+                    demonstration.)
+                </p>
+            </div>
+        </article>
+    </main>
+</Layout>

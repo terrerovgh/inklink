@@ -1,0 +1,23 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { ShopRecommendations } from "../../components/home/ShopRecommendations";
+---
+
+<Layout title="InkLink Shop - Premium Aftercare & Merch">
+    <main class="min-h-screen bg-zinc-950 pt-20">
+        <div class="py-12">
+            <div
+                class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 text-center text-white"
+            >
+                <h1 class="text-4xl md:text-5xl font-black mb-4">
+                    Official Shop
+                </h1>
+                <p class="text-lg text-zinc-400 max-w-2xl mx-auto">
+                    Curated aftercare products and exclusive InkLink
+                    merchandise.
+                </p>
+            </div>
+            <ShopRecommendations />
+        </div>
+    </main>
+</Layout>

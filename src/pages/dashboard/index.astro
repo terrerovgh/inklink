@@ -1,0 +1,77 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import { supabase } from "../../lib/supabase";
+import FeedGrid from "../../components/dashboard/feed/FeedGrid";
+import MapWidget from "../../components/dashboard/feed/MapWidget";
+import MarketWidget from "../../components/dashboard/feed/MarketWidget";
+import ShopWidget from "../../components/dashboard/feed/ShopWidget";
+import BlogWidget from "../../components/dashboard/feed/BlogWidget";
+import ArtistWorkWidget from "../../components/dashboard/feed/ArtistWorkWidget";
+
+const user = Astro.locals.user;
+
+// Fetch Market Listings
+const { data: marketListings } = await supabase
+    .from("market_listings")
+    .select("*")
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+// Fetch Blog Posts
+const { data: blogPosts } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .order("published_at", { ascending: false })
+    .limit(3);
+
+// Fetch Products
+const { data: products } = await supabase.from("products").select("*").limit(4);
+
+// Fetch Local Works (Flash)
+const { data: works } = await supabase
+    .from("flash_tattoos")
+    .select("*")
+    .limit(6);
+---
+
+<DashboardLayout title="Overview">
+    <div class="space-y-6">
+        <div>
+            <h2 class="text-3xl font-outfit font-bold tracking-tight">
+                Dashboard
+            </h2>
+            <p class="text-muted-foreground">Welcome back, {user?.email}!</p>
+        </div>
+
+        <FeedGrid>
+            <!-- Row 1 -->
+            <div class="md:col-span-2">
+                <MapWidget client:only="react" />
+            </div>
+            <MarketWidget listings={marketListings || []} />
+
+            <!-- Row 2 -->
+            <ArtistWorkWidget works={works || []} />
+            <ShopWidget products={products || []} />
+
+            <!-- Row 3 -->
+            <div class="md:col-span-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <BlogWidget posts={blogPosts || []} />
+                    <!-- Placeholder for Notification/Activity Feed -->
+                    <div
+                        class="rounded-xl border border-border bg-card p-6 shadow-sm md:col-span-2"
+                    >
+                        <h3 class="text-lg font-semibold mb-4">Activity</h3>
+                        <div
+                            class="flex flex-col items-center justify-center h-40 text-muted-foreground text-sm border-2 border-dashed rounded-lg"
+                        >
+                            No recent activity
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </FeedGrid>
+    </div>
+</DashboardLayout>

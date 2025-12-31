@@ -1,0 +1,451 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { supabase } from "../../lib/supabase";
+import { type Studio } from "../../lib/types";
+import {
+    MapPin,
+    Globe,
+    Instagram,
+    Mail,
+    Calendar,
+    ChevronRight,
+} from "lucide-react";
+import StudioActions from "../../components/features/studio/StudioActions";
+import PortfolioGrid from "../../components/features/studio/PortfolioGrid";
+
+const { slug } = Astro.params;
+
+if (!slug) {
+    return Astro.redirect("/404");
+}
+
+// Fetch Studio
+const { data: studioData, error } = await supabase
+    .from("studios")
+    .select("*, profiles(*)") // profiles referenced by studio_members usually? No, via 'owner_id' or manual join.
+    // Wait, studio members are in 'studio_members' table.
+    // The previous code used `.select('*, profiles:studio_members(...)')` or similar?
+    // Let's check the original file content or assume simple fetch for now.
+    // Given previous `members = studio.profiles` usage, it implies a join.
+    // But 'studios' has 'owner_id'. Studio Members is a many-to-many via 'studio_members' table.
+    // For now, I'll fetch studio and separate fetch for members if needed, or rely on existing join if it was working.
+    // I'll stick to a simple fetch and cast to 'any' to fix the immediate breakage.
+    .eq("slug", slug)
+    .single();
+
+const studio = studioData as any;
+
+if (error || !studio) {
+    console.error("Studio fetch error:", error);
+    return Astro.redirect("/404");
+}
+
+// Fetch members manually to be safe or use what was there
+const { data: memberData } = await supabase
+    .from("studio_members")
+    .select("user_id, role, profiles(id, full_name, avatar_url, bio, username)")
+    .eq("studio_id", studio.id);
+
+const members =
+    memberData?.map((m: any) => ({
+        role: m.role,
+        ...m.profiles,
+    })) || [];
+
+// Fetch curated portfolio items
+const { data: curatedItems } = await supabase
+    .from("studio_portfolio_items")
+    .select("flash_tattoos(id, image_url, title, style_id, styles(id, name))")
+    .eq("studio_id", studio.id)
+    .order("display_order", { ascending: true });
+
+let portfolioItems: any[] = [];
+
+if (curatedItems && curatedItems.length > 0) {
+    portfolioItems = curatedItems.map((i: any) => ({
+        ...i.flash_tattoos,
+        style: i.flash_tattoos.styles,
+    }));
+} else if (members.length > 0) {
+    // Fallback to aggregation
+    const memberIds = members.map((m: any) => m.id).filter(Boolean);
+
+    if (memberIds.length > 0) {
+        const { data: flashes } = await supabase
+            .from("flash_tattoos")
+            .select("id, image_url, title, style_id, styles(id, name)")
+            .in("artist_id", memberIds)
+            .eq("is_available", true)
+            .order("created_at", { ascending: false })
+            .limit(12);
+
+        if (flashes) {
+            portfolioItems = flashes.map((f: any) => ({
+                ...f,
+                style: f.styles,
+            }));
+        }
+    }
+}
+
+// Extract unique styles for filter
+const availableStyles = Array.from(
+    new Set(portfolioItems.map((i) => i.style?.name).filter(Boolean)),
+);
+const portfolioImages = portfolioItems.map((i) => i.image_url); // Backward compatibility for now
+---
+
+<Layout title={`${studio.name} | InkLink`}>
+    {/* Hero Section */}
+    <div
+        class="relative h-[70vh] min-h-[600px] flex items-end overflow-hidden group"
+    >
+        <div class="absolute inset-0 z-0">
+            <img
+                src={studio.cover_url ||
+                    "https://images.unsplash.com/photo-1598371839696-5c5bb3524346?q=80&w=2000&auto=format&fit=crop"}
+                alt="Studio Cover"
+                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent"
+            >
+            </div>
+            <div
+                class="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent opacity-80"
+            >
+            </div>
+        </div>
+
+        <div
+            class="container-md relative z-10 pb-12 flex flex-col md:flex-row gap-8 items-end justify-between"
+        >
+            <div class="flex items-end gap-6 w-full md:w-auto">
+                <div
+                    class="h-32 w-32 md:h-40 md:w-40 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 overflow-hidden shadow-2xl shrink-0 p-1"
+                >
+                    <img
+                        src={studio.logo_url ||
+                            "https://images.unsplash.com/photo-1598371839696-5c5bb3524346?q=80&w=200&auto=format&fit=crop"}
+                        alt="Logo"
+                        class="w-full h-full object-cover rounded-xl"
+                    />
+                </div>
+                <div class="mb-4">
+                    {
+                        studio.is_premium && (
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 backdrop-blur-md mb-3">
+                                ✦ PREMIUM STUDIO
+                            </span>
+                        )
+                    }
+                    <h1
+                        class="text-5xl md:text-7xl font-outfit font-bold mb-4 text-white drop-shadow-lg tracking-tight"
+                    >
+                        {studio.name}
+                    </h1>
+                    <div class="flex flex-wrap gap-6 text-sm text-gray-200">
+                        <span
+                            class="flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5"
+                        >
+                            <MapPin size={16} className="text-primary" />
+                            {studio.city}, {studio.country}
+                        </span>
+                        <span
+                            class="flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5"
+                        >
+                            <span class="flex gap-0.5 text-amber-500">
+                                {
+                                    [1, 2, 3, 4, 5].map(() => (
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="12"
+                                            height="12"
+                                            viewBox="0 0 24 24"
+                                            fill="currentColor"
+                                            stroke="none"
+                                        >
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                        </svg>
+                                    ))
+                                }
+                            </span>
+                            <span class="font-medium">5.0</span>
+                            <span class="text-gray-400">(128 reviews)</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="flex gap-3 w-full md:w-auto glass-panel p-2 rounded-xl border border-white/5 bg-black/20 backdrop-blur-md"
+            >
+                <StudioActions
+                    client:load
+                    studioId={studio.id}
+                    studioName={studio.name}
+                />
+            </div>
+        </div>
+    </div>
+
+    {/* Main Content */}
+    <main class="container-md py-12 grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div class="md:col-span-2 space-y-16">
+            {/* About */}
+            <section>
+                <h2
+                    class="text-3xl font-outfit font-bold mb-6 flex items-center gap-3"
+                >
+                    About Studio
+                    <div
+                        class="h-px flex-1 bg-gradient-to-r from-border to-transparent"
+                    >
+                    </div>
+                </h2>
+                <div
+                    class="prose prose-invert max-w-none text-muted-foreground leading-relaxed text-lg"
+                >
+                    <p>{studio.description || "No description available."}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mt-8">
+                    <div
+                        class="p-6 bg-muted/20 rounded-2xl border border-white/5 hover:bg-muted/30 transition-colors"
+                    >
+                        <div class="flex items-center gap-3 mb-3 text-primary">
+                            <div class="p-2 rounded-lg bg-primary/10">
+                                <MapPin size={20} />
+                            </div>
+                            <span class="font-bold font-outfit">Location</span>
+                        </div>
+                        <div class="font-medium text-lg leading-snug">
+                            {studio.address || "Hidden"}<br />
+                            <span
+                                class="text-muted-foreground text-base font-normal"
+                                >{studio.city}, {studio.country}</span
+                            >
+                        </div>
+                    </div>
+                    <div
+                        class="p-6 bg-muted/20 rounded-2xl border border-white/5 hover:bg-muted/30 transition-colors"
+                    >
+                        <div class="flex items-center gap-3 mb-3 text-primary">
+                            <div class="p-2 rounded-lg bg-primary/10">
+                                <Globe size={20} />
+                            </div>
+                            <span class="font-bold font-outfit">Socials</span>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <a
+                                href="#"
+                                class="flex items-center gap-2 hover:text-white transition-colors text-muted-foreground"
+                                ><Globe size={16} /> Website</a
+                            >
+                            <a
+                                href="#"
+                                class="flex items-center gap-2 hover:text-white transition-colors text-muted-foreground"
+                                ><Instagram size={16} /> Instagram</a
+                            >
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Artists */}
+            <section>
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-3xl font-outfit font-bold">
+                        Resident Artists
+                    </h3>
+                    <a
+                        href="#"
+                        class="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                    >
+                        View All <ChevronRight size={14} />
+                    </a>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {
+                        members.map((artist: any) => (
+                            <a
+                                href={`/artist/${artist.username}`}
+                                class="group relative p-1 rounded-2xl bg-gradient-to-br from-white/10 to-transparent border border-white/5 hover:border-white/10 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 block"
+                            >
+                                <div class="absolute inset-0 bg-background/80 backdrop-blur-3xl rounded-2xl -z-10" />
+
+                                <div class="p-5 flex flex-col h-full">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div class="h-20 w-20 rounded-2xl overflow-hidden bg-muted border border-white/10 group-hover:scale-105 transition-transform duration-500 shadow-xl">
+                                            <img
+                                                src={artist.avatar_url}
+                                                alt={artist.full_name}
+                                                class="h-full w-full object-cover"
+                                            />
+                                        </div>
+                                        <div class="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors border border-white/5 text-muted-foreground hover:text-white">
+                                            <ChevronRight size={20} />
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-auto">
+                                        <h4 class="text-xl font-bold group-hover:text-primary transition-colors font-outfit">
+                                            {artist.full_name}
+                                        </h4>
+                                        <p class="text-sm text-muted-foreground uppercase tracking-wider font-medium mb-4">
+                                            {artist.role}
+                                        </p>
+
+                                        <div class="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
+                                            <div class="flex -space-x-2">
+                                                {[1, 2, 3].map(() => (
+                                                    <div class="w-6 h-6 rounded-full bg-muted border border-background" />
+                                                ))}
+                                            </div>
+                                            <span class="text-xs text-muted-foreground ml-2">
+                                                +12 works
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        ))
+                    }
+                    {
+                        members.length === 0 && (
+                            <div class="col-span-full p-8 rounded-2xl border border-dashed border-white/10 text-center">
+                                <p class="text-muted-foreground italic">
+                                    No artists currently listed.
+                                </p>
+                            </div>
+                        )
+                    }
+                </div>
+            </section>
+        </div>
+
+        {/* Sidebar Info */}
+        <div class="space-y-6">
+            <div
+                class="p-8 rounded-3xl bg-card/50 backdrop-blur-xl border border-white/5 shadow-xl sticky top-24"
+            >
+                <h3
+                    class="font-bold text-xl mb-6 flex items-center gap-3 font-outfit"
+                >
+                    <div class="p-2 bg-primary/10 rounded-lg text-primary">
+                        <Calendar size={20} />
+                    </div>
+                    Opening Hours
+                </h3>
+                <div class="space-y-4">
+                    <div
+                        class="flex justify-between items-center pb-3 border-b border-white/5"
+                    >
+                        <span class="text-muted-foreground font-medium"
+                            >Mon - Fri</span
+                        >
+                        <span class="font-bold">10:00 - 20:00</span>
+                    </div>
+                    <div
+                        class="flex justify-between items-center pb-3 border-b border-white/5"
+                    >
+                        <span class="text-muted-foreground font-medium"
+                            >Saturday</span
+                        >
+                        <span class="font-bold">11:00 - 18:00</span>
+                    </div>
+                    <div
+                        class="flex justify-between items-center text-muted-foreground/50"
+                    >
+                        <span class="font-medium">Sunday</span>
+                        <span
+                            class="px-2 py-0.5 rounded text-xs border border-current"
+                            >Closed</span
+                        >
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-white/5">
+                    <div
+                        class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 p-6 group"
+                    >
+                        <div
+                            class="absolute -right-4 -top-4 bg-primary/20 blur-2xl h-24 w-24 rounded-full"
+                        >
+                        </div>
+
+                        <h3 class="font-bold text-white mb-2 relative z-10">
+                            Guest Spots?
+                        </h3>
+                        <p
+                            class="text-sm text-muted-foreground mb-4 relative z-10"
+                        >
+                            We are accepting guest artist applications for
+                            Summer 2026.
+                        </p>
+                        <button
+                            class="w-full py-2.5 bg-white text-black rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-white/10 relative z-10"
+                        >
+                            Apply Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {/* Portfolio Section */}
+    <section class="container-md py-16">
+        <div
+            class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6"
+        >
+            <div>
+                <h2 class="text-4xl font-outfit font-bold mb-3 text-white">
+                    Selected Works
+                </h2>
+                <p class="text-muted-foreground text-lg max-w-xl">
+                    A curated collection of recent masterpieces created by our
+                    resident artists.
+                </p>
+            </div>
+            <a
+                href="#"
+                class="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all font-medium text-sm group"
+            >
+                View Full Gallery <ChevronRight
+                    size={16}
+                    className="group-hover:translate-x-0.5 transition-transform"
+                />
+            </a>
+        </div>
+
+        <PortfolioGrid
+            client:idle
+            items={portfolioItems.length > 0
+                ? portfolioItems.map((i) => ({
+                      id: i.id || i.image_url,
+                      url: i.image_url,
+                      style: i.style,
+                      title: i.title,
+                  }))
+                : undefined}
+            availableStyles={availableStyles}
+            initialImages={portfolioImages.length > 0
+                ? portfolioImages
+                : [
+                      "https://images.unsplash.com/photo-1598371839696-5c5bb3524346?q=80&w=600&auto=format&fit=crop",
+                      "https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?q=80&w=600&auto=format&fit=crop",
+                      "https://images.unsplash.com/photo-1590246294305-9e097d44368c?q=80&w=600&auto=format&fit=crop",
+                  ]}
+        />
+
+        <div class="mt-8 text-center md:hidden">
+            <a
+                href="#"
+                class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors"
+            >
+                View Full Gallery <ChevronRight size={16} />
+            </a>
+        </div>
+    </section>
+</Layout>

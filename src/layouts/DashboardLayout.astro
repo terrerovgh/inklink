@@ -1,0 +1,108 @@
+---
+import "../styles/global.css";
+import {
+    LayoutDashboard,
+    Calendar,
+    MessageSquare,
+    Settings,
+    LogOut,
+    PenTool,
+} from "lucide-react";
+
+interface Props {
+    title: string;
+}
+
+const { title } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+    { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Bookings", href: "/dashboard/bookings", icon: Calendar },
+    { label: "Studio Manager", href: "/dashboard/studio", icon: PenTool }, // Conditional in future
+    { label: "Messages", href: "/dashboard/messages", icon: MessageSquare },
+    { label: "Settings", href: "/dashboard/settings", icon: Settings },
+];
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>{title} | InkLink Dashboard</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body
+        class="bg-background text-foreground antialiased font-sans flex h-screen overflow-hidden"
+    >
+        <!-- Sidebar -->
+        <aside
+            class="w-64 border-r border-border bg-card hidden md:flex flex-col"
+        >
+            <div class="p-6 border-b border-border">
+                <h1
+                    class="font-outfit text-2xl font-bold text-foreground tracking-tight"
+                >
+                    InkLink
+                </h1>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-1">
+                {
+                    navItems.map((item) => {
+                        const isActive = currentPath === item.href;
+                        const Icon = item.icon;
+                        return (
+                            <a
+                                href={item.href}
+                                class={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                            >
+                                <Icon size={18} />
+                                {item.label}
+                            </a>
+                        );
+                    })
+                }
+            </nav>
+
+            <div class="p-4 border-t border-border">
+                <button
+                    id="logout-btn"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-md w-full transition-colors"
+                >
+                    <LogOut size={18} />
+                    Sign Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- Mobile Header (Visible only on small screens) -->
+        <!-- TODO: Add mobile hamburger menu -->
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto bg-background p-8">
+            <slot />
+        </main>
+
+        <script>
+            import { supabase } from "../lib/supabase";
+
+            const logoutBtn = document.getElementById("logout-btn");
+            logoutBtn?.addEventListener("click", async () => {
+                const { error } = await supabase.auth.signOut();
+                if (!error) {
+                    // Delete cookies manually if needed or let JS client handle it
+                    document.cookie =
+                        "sb-access-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+                    document.cookie =
+                        "sb-refresh-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+                    window.location.href = "/auth/signin";
+                }
+            });
+        </script>
+    </body>
+</html>

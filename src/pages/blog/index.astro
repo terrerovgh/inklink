@@ -1,0 +1,29 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { BlogSection } from "../../components/home/BlogSection";
+---
+
+<Layout title="InkLink Blog - Tattoo Culture & Tips">
+    <main class="min-h-screen bg-white dark:bg-black pt-20">
+        <div class="py-12">
+            <div
+                class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 text-center"
+            >
+                <h1
+                    class="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white mb-4"
+                >
+                    The InkLink Journal
+                </h1>
+                <p
+                    class="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto"
+                >
+                    Stories, interviews, and guides from the heart of Cuba's
+                    tattoo community.
+                </p>
+            </div>
+
+            {/* Reusing BlogSection for the feed logic for now */}
+            <BlogSection />
+        </div>
+    </main>
+</Layout>

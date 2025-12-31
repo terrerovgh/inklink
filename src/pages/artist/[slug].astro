@@ -1,0 +1,111 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PortfolioTemplate from "../../components/portfolio/PortfolioTemplate";
+import { supabase } from "../../lib/supabase";
+
+const { slug } = Astro.params;
+
+if (!slug) {
+    return Astro.redirect("/404");
+}
+
+let artist = null;
+let works = [];
+
+if (slug === "demo-artist") {
+    artist = {
+        name: "Demo Artist",
+        role: "Tattoo Artist",
+        avatar_url:
+            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop",
+        bio: "Specializing in neo-traditional and blackwork. Creating lasting art since 2018.",
+        instagram: "https://instagram.com/demo",
+        website: "https://demo.com",
+        email: "demo@inklink.com",
+    };
+    works = [
+        {
+            id: "1",
+            url: "https://images.unsplash.com/photo-1598371839696-5c5bb3524346?q=80&w=800&auto=format&fit=crop",
+            title: "Dragon Sleeve",
+        },
+        {
+            id: "2",
+            url: "https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?q=80&w=800&auto=format&fit=crop",
+            title: "Minimalist Rose",
+        },
+        {
+            id: "3",
+            url: "https://images.unsplash.com/photo-1562962230-16bc46364924?q=80&w=800&auto=format&fit=crop",
+            title: "Geometric Wolf",
+        },
+        {
+            id: "4",
+            url: "https://images.unsplash.com/photo-1590246294305-9e097d44368c?q=80&w=800&auto=format&fit=crop",
+            title: "Traditional Ship",
+        },
+        {
+            id: "5",
+            url: "https://images.unsplash.com/photo-1542359649-31e03cd4d909?q=80&w=800&auto=format&fit=crop",
+            title: "Watercolor Compass",
+        },
+        {
+            id: "6",
+            url: "https://images.unsplash.com/photo-1598371839696-5c5bb3524346?q=80&w=800&auto=format&fit=crop",
+            title: "Japanese Koi",
+        },
+    ];
+    // Fetch from Supabase
+    const { data: profile, error } = (await supabase
+        .from("profiles")
+        .select("*")
+        .eq("username", slug)
+        .single()) as any;
+
+    if (error) {
+        console.error("Error fetching artist profile:", error);
+    }
+
+    if (profile) {
+        artist = {
+            name: profile.full_name || "Unknown Artist",
+            role: profile.role || "Artist",
+            avatar_url: profile.avatar_url || "https://via.placeholder.com/150",
+            bio: profile.bio || "No bio available.",
+            email: profile.email,
+        };
+
+        // Fetch specific works from flash_tattoos table
+        const { data: flash } = await supabase
+            .from("flash_tattoos")
+            .select("*")
+            .eq("artist_id", profile.id)
+            .eq("is_available", true)
+            .order("created_at", { ascending: false })
+            .limit(12);
+
+        if (flash && flash.length > 0) {
+            works = flash.map((f: any) => ({
+                id: f.id,
+                url: f.image_url,
+                title: f.title,
+            }));
+        } else {
+            // If no flash tattoos, we might want to show nothing or a placeholder.
+            // For now, let's leave it empty so the UI handles it gracefully (or shows 'No works yet')
+            // checking PortfolioTemplate might reveal how it handles empty arrays.
+            works = [];
+        }
+    }
+}
+
+if (!artist) {
+    return Astro.redirect("/404");
+}
+---
+
+<Layout title={`${artist.name} | Portfolio`}>
+    <main>
+        <PortfolioTemplate client:only="react" artist={artist} works={works} />
+    </main>
+</Layout>
