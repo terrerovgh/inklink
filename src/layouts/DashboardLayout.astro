@@ -7,6 +7,9 @@ import {
     Settings,
     LogOut,
     PenTool,
+    Zap, // Flash
+    Tag, // Offers
+    Briefcase, // Projects
 } from "lucide-react";
 
 interface Props {
@@ -16,13 +19,79 @@ interface Props {
 const { title } = Astro.props;
 const currentPath = Astro.url.pathname;
 
-const navItems = [
+const profile = Astro.locals.profile;
+const userRole = profile?.role?.toLowerCase();
+
+const allNavItems = [
     { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Bookings", href: "/dashboard/bookings", icon: Calendar },
-    { label: "Studio Manager", href: "/dashboard/studio", icon: PenTool }, // Conditional in future
+    {
+        label: "My Projects",
+        href: "/dashboard/projects",
+        icon: Briefcase,
+        roles: ["user", "admin"],
+    },
+    {
+        label: "Bookings",
+        href: "/dashboard/bookings",
+        icon: Calendar,
+        roles: ["user", "artist", "studio_owner"], // Regular bookings view
+    },
+    {
+        label: "My Flash",
+        href: "/dashboard/artist/flash",
+        icon: Zap,
+        roles: ["artist", "admin"],
+    },
+    {
+        label: "My Offers",
+        href: "/dashboard/artist/offers",
+        icon: Tag,
+        roles: ["artist", "admin"],
+    },
+    {
+        label: "Studio Manager",
+        href: "/dashboard/studio",
+        icon: PenTool,
+        roles: ["artist", "studio_owner", "admin"],
+    },
     { label: "Messages", href: "/dashboard/messages", icon: MessageSquare },
-    { label: "Settings", href: "/dashboard/settings", icon: Settings },
+    { label: "Profile", href: "/dashboard/profile", icon: Settings },
+    {
+        label: "Admin Overview",
+        href: "/dashboard/admin",
+        icon: LayoutDashboard,
+        roles: ["admin"],
+    },
+    {
+        label: "Manage Users",
+        href: "/dashboard/admin/users",
+        icon: Settings, // Reusing settings icon or similar is fine
+        roles: ["admin"],
+    },
+    {
+        label: "Manage Studios",
+        href: "/dashboard/admin/studios",
+        icon: PenTool,
+        roles: ["admin"],
+    },
+    {
+        label: "Manage Content",
+        href: "/dashboard/admin/content",
+        icon: Zap,
+        roles: ["admin"],
+    },
+    {
+        label: "Manage Bookings",
+        href: "/dashboard/admin/bookings",
+        icon: Calendar,
+        roles: ["admin"],
+    },
 ];
+
+const navItems = allNavItems.filter((item) => {
+    if (!item.roles) return true;
+    return item.roles.includes(userRole);
+});
 ---
 
 <!doctype html>

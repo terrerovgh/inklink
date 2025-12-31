@@ -1,0 +1,53 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+import ContentModeration from "../../../components/admin/ContentModeration";
+import { supabase } from "../../../lib/supabase";
+
+// Security Check
+const { user } = Astro.locals;
+if (!user) return Astro.redirect("/auth/login");
+const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+if ((profile as any)?.role?.toLowerCase() !== "admin")
+    return Astro.redirect("/dashboard");
+
+// Fetch Content (Limit to recent for now)
+const { data: flash } = await supabase
+    .from("flash_tattoos")
+    .select("*, artist:artist_id(full_name)")
+    .limit(20)
+    .order("created_at", { ascending: false });
+const { data: offers } = await supabase
+    .from("offers")
+    .select("*")
+    .limit(20)
+    .order("created_at", { ascending: false });
+const { data: dossiers } = await supabase
+    .from("dossiers")
+    .select("*")
+    .limit(20)
+    .order("created_at", { ascending: false });
+---
+
+<DashboardLayout title="Content Moderation">
+    <div class="space-y-6">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">
+                Content Moderation
+            </h1>
+            <p class="text-muted-foreground">
+                Review and remove inappropriate content.
+            </p>
+        </div>
+
+        <ContentModeration
+            client:load
+            initialFlash={(flash as any) || []}
+            initialOffers={(offers as any) || []}
+            initialDossiers={(dossiers as any) || []}
+        />
+    </div>
+</DashboardLayout>

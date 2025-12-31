@@ -1,0 +1,78 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { supabase } from "../../lib/supabase";
+import { MapPin, ArrowRight } from "lucide-react";
+
+// Fetch Artists
+const { data: artists } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("role", "artist")
+    .limit(50);
+
+const artistList = (artists || []).map((artist) => ({
+    id: artist.id,
+    name: artist.full_name,
+    username: artist.username,
+    avatar: artist.avatar_url || "https://via.placeholder.com/150",
+    location:
+        [artist.city, artist.country].filter(Boolean).join(", ") || "Cuba",
+    bio: artist.bio || "No bio available.",
+}));
+---
+
+<Layout title="Artists | InkLink">
+    <main class="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <header class="mb-12 text-center">
+                <h1
+                    class="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white mb-4"
+                >
+                    Meet the Artists
+                </h1>
+                <p
+                    class="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto"
+                >
+                    Talented tattoo artists from all over Cuba. Find the perfect
+                    style for your next piece.
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {
+                    artistList.map((artist) => (
+                        <a
+                            href={`/artist/${artist.username}`}
+                            class="group block bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-zinc-200 dark:border-zinc-800"
+                        >
+                            <div class="aspect-square overflow-hidden bg-zinc-100 relative">
+                                <img
+                                    src={artist.avatar}
+                                    alt={artist.name}
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                                    <span class="text-white font-semibold flex items-center gap-2">
+                                        View Profile <ArrowRight size={16} />
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                    {artist.name}
+                                </h3>
+                                <div class="flex items-center text-zinc-500 dark:text-zinc-400 text-sm mb-4">
+                                    <MapPin size={14} class="mr-1" />
+                                    {artist.location}
+                                </div>
+                                <p class="text-zinc-600 dark:text-zinc-400 text-sm line-clamp-2">
+                                    {artist.bio}
+                                </p>
+                            </div>
+                        </a>
+                    ))
+                }
+            </div>
+        </div>
+    </main>
+</Layout>

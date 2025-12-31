@@ -4,46 +4,21 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardContent } from '../ui/card';
 
-const MOCK_MARKET_ITEMS = [
-    {
-        id: 1,
-        title: 'Vintage Coil Machine',
-        price: 150,
-        currency: 'USD',
-        image: 'https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=600&q=80',
-        location: 'Havana',
-        seller: 'Old School Supplies'
-    },
-    {
-        id: 2,
-        title: 'Unopened Ink Set (Primary Colors)',
-        price: 85,
-        currency: 'USD',
-        image: 'https://images.unsplash.com/photo-1598371839696-5c5bbcece707?w=600&q=80',
-        location: 'Matanzas',
-        seller: 'Pro Ink Cuba'
-    },
-    {
-        id: 3,
-        title: 'Heavy Duty Armrest',
-        price: 120,
-        currency: 'USD',
-        image: 'https://images.unsplash.com/photo-1590246130796-54238a2995bd?w=600&q=80',
-        location: 'Havana',
-        seller: 'Studio Equipment Co.'
-    },
-    {
-        id: 4,
-        title: 'Disposable Grips (Box of 20)',
-        price: 25,
-        currency: 'USD',
-        image: 'https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=600&q=80',
-        location: 'Santa Clara',
-        seller: 'Tattoo Supply Helper'
-    }
-];
+export interface MarketItem {
+    id: string | number;
+    title: string;
+    price: number;
+    currency: string;
+    image: string;
+    location: string;
+    seller: string;
+}
 
-export const MarketplaceSection = () => {
+interface MarketplaceSectionProps {
+    items?: MarketItem[];
+}
+
+export const MarketplaceSection = ({ items = [] }: MarketplaceSectionProps) => {
     return (
         <section className="py-24 bg-zinc-50 dark:bg-zinc-900/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -63,7 +38,7 @@ export const MarketplaceSection = () => {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {MOCK_MARKET_ITEMS.map((item) => (
+                    {items.map((item) => (
                         <Card key={item.id} className="group bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 overflow-hidden hover:shadow-lg dark:hover:shadow-blue-900/10 hover:border-blue-500/30 dark:hover:border-blue-500/30 transition-all duration-300">
                             <CardContent className="p-0">
                                 <div className="relative aspect-square bg-zinc-100 dark:bg-zinc-800 overflow-hidden">

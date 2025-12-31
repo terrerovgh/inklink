@@ -3,96 +3,13 @@ import React, { useState } from 'react';
 import { ProjectModal, type Project } from '../shared/ProjectModal';
 import { MapPin } from 'lucide-react';
 
-const MOCK_PROJECTS: Project[] = [
-    {
-        id: '1',
-        title: 'Neon Cyberpunk Sleeve',
-        description: 'A full sleeve exploring themes of cyberpunk aesthetic, featuring neon signs, rain-slicked streets, and mechanical enhancements. Took about 4 sessions to complete.',
-        artist: {
-            name: 'Alex "Neon" Rivera',
-            avatar: 'https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=150&h=150&fit=crop',
-            location: 'Havana, Cuba'
-        },
-        media: [
-            { type: 'image', url: 'https://images.unsplash.com/photo-1598371839696-5c5bbcece707?w=800&q=80' },
-            { type: 'image', url: 'https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=800&q=80' }
-        ],
-        tags: ['cyberpunk', 'color', 'sleeve', 'scifi']
-    },
-    {
-        id: '2',
-        title: 'Traditional Rose & Dagger',
-        description: 'Classic american traditional style rose and dagger piece. Bold lines and heavy shading.',
-        artist: {
-            name: 'Maria Sanchez',
-            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop',
-            location: 'Santiago, Cuba'
-        },
-        media: [
-            { type: 'image', url: 'https://images.unsplash.com/photo-1590246130796-54238a2995bd?w=800&q=80' },
-        ],
-        tags: ['traditional', 'oldschool', 'floral', 'dagger']
-    },
-    {
-        id: '3',
-        title: 'Geometric Lion',
-        description: 'Fine line geometric lion portrait on the forearm. Combining realism with mandate patterns.',
-        artist: {
-            name: 'David Chen',
-            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop',
-            location: 'Varadero, Cuba'
-        },
-        media: [
-            { type: 'image', url: 'https://images.unsplash.com/photo-1562962230-16e4623d36e6?w=800&q=80' },
-            { type: 'image', url: 'https://images.unsplash.com/photo-1568515045052-58e176378e99?w=800&q=80' }
-        ],
-        tags: ['geometric', 'fineline', 'blackwork', 'lion']
-    },
-    {
-        id: '4',
-        title: 'Japanese Dragon Backpiece',
-        description: 'Large scale black and grey dragon backpiece. In progress.',
-        artist: {
-            name: 'Yuki Tanaka',
-            avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop',
-            location: 'Havana, Cuba'
-        },
-        media: [
-            { type: 'image', url: 'https://images.unsplash.com/photo-1589053894452-47535b44018f?w=800&q=80' },
-        ],
-        tags: ['irezumi', 'dragon', 'backpiece', 'blackandgrey']
-    },
-    {
-        id: '5',
-        title: 'Minimalist Wave',
-        description: 'Small, minimalist wave tattoo on the wrist.',
-        artist: {
-            name: 'Sofia Gomez',
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop',
-            location: 'Havana, Cuba'
-        },
-        media: [
-            { type: 'image', url: 'https://images.unsplash.com/photo-1522262963369-efc8f334a13d?w=800&q=80' },
-        ],
-        tags: ['minimalist', 'small', 'wave', 'nature']
-    },
-    {
-        id: '6',
-        title: 'Watercolor Abstract',
-        description: 'Abstract watercolor splash with a compass design.',
-        artist: {
-            name: 'Carlos Ruiz',
-            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop',
-            location: 'Havana, Cuba'
-        },
-        media: [
-            { type: 'image', url: 'https://images.unsplash.com/photo-1614275083167-27e448b39417?w=800&q=80' },
-        ],
-        tags: ['watercolor', 'abstract', 'color', 'compass']
-    }
-];
 
-export const TattooFeed = () => {
+
+interface TattooFeedProps {
+    initialProjects?: Project[];
+}
+
+export const TattooFeed = ({ initialProjects }: TattooFeedProps) => {
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
     return (
@@ -112,7 +29,7 @@ export const TattooFeed = () => {
                 </div>
 
                 <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-                    {MOCK_PROJECTS.map((project) => (
+                    {(initialProjects || []).map((project) => (
                         <div
                             key={project.id}
                             onClick={() => setSelectedProject(project)}

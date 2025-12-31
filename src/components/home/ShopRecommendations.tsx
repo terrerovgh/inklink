@@ -4,37 +4,21 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardContent } from '../ui/card';
 
-const RECOMMENDATIONS = [
-    {
-        id: 1,
-        title: 'InkLink Aftercare Balm',
-        price: 15,
-        rating: 4.8,
-        reviews: 120,
-        image: 'https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=600&q=80',
-        tag: 'Best Seller'
-    },
-    {
-        id: 2,
-        title: 'Daily Moisturizer SPF 30',
-        price: 22,
-        rating: 4.9,
-        reviews: 85,
-        image: 'https://images.unsplash.com/photo-1598371839696-5c5bbcece707?w=600&q=80',
-        tag: 'New'
-    },
-    {
-        id: 3,
-        title: 'Vibrant Color Enhancer',
-        price: 18,
-        rating: 4.7,
-        reviews: 210,
-        image: 'https://images.unsplash.com/photo-1590246130796-54238a2995bd?w=600&q=80',
-        tag: null
-    }
-];
+export interface RecommendedProduct {
+    id: string | number;
+    title: string;
+    price: number;
+    rating?: number;
+    reviews?: number;
+    image: string;
+    tag?: string | null;
+}
 
-export const ShopRecommendations = () => {
+interface ShopRecommendationsProps {
+    products?: RecommendedProduct[];
+}
+
+export const ShopRecommendations = ({ products = [] }: ShopRecommendationsProps) => {
     return (
         <section className="py-24 bg-zinc-950 text-white relative overflow-hidden">
             {/* Background accent */}
@@ -59,7 +43,7 @@ export const ShopRecommendations = () => {
                     </div>
 
                     <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        {RECOMMENDATIONS.map((product) => (
+                        {products.map((product) => (
                             <Card key={product.id} className="group bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 hover:shadow-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2">
                                 <CardContent className="p-5 flex flex-col h-full">
                                     <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-5 bg-black">

@@ -1,6 +1,31 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { TattooFeed } from "../components/home/TattooFeed";
+import { supabase } from "../lib/supabase";
+
+// Fetch Flash Tattoos (Projects) for Explore
+const { data: flashData } = await supabase
+    .from("flash_tattoos")
+    .select("*, profiles!inner(full_name, avatar_url, city, country)")
+    .eq("is_available", true)
+    .order("created_at", { ascending: false })
+    .limit(50); // Fetch more for explore page
+
+const projects = (flashData || []).map((flash: any) => ({
+    id: flash.id,
+    title: flash.title,
+    description: flash.description || "",
+    artist: {
+        name: flash.profiles?.full_name || "Unknown Artist",
+        avatar: flash.profiles?.avatar_url || "https://via.placeholder.com/150",
+        location:
+            [flash.profiles?.city, flash.profiles?.country]
+                .filter(Boolean)
+                .join(", ") || "Cuba",
+    },
+    media: [{ type: "image", url: flash.image_url }] as any[],
+    tags: ["flash", "tattoo"],
+}));
 ---
 
 <Layout title="Explore Tattoos | InkLink">
@@ -19,7 +44,7 @@ import { TattooFeed } from "../components/home/TattooFeed";
                     artists. Filter by style, artist, or location.
                 </p>
             </header>
-            <TattooFeed client:load />
+            <TattooFeed client:load initialProjects={projects} />
         </div>
     </main>
 </Layout>

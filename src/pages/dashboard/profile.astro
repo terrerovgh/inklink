@@ -1,0 +1,260 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import { actions } from "astro:actions";
+import { User, Camera, Mail, Shield, MapPin, AtSign } from "lucide-react";
+
+const profile = Astro.locals.profile;
+const user = Astro.locals.user;
+
+if (!user) {
+    return Astro.redirect("/auth/signin");
+}
+---
+
+<DashboardLayout title="Universal Profile | InkLink">
+    <div
+        class="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
+    >
+        <!-- Header Section -->
+        <div
+            class="relative overflow-hidden rounded-3xl bg-zinc-900 border border-white/5 p-8 md:p-12"
+        >
+            <div
+                class="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] -mr-32 -mt-32"
+            >
+            </div>
+            <div
+                class="absolute bottom-0 left-0 w-64 h-64 bg-purple-600/10 blur-[100px] -ml-32 -mb-32"
+            >
+            </div>
+
+            <div class="relative flex flex-col md:flex-row items-center gap-8">
+                <!-- Avatar Section -->
+                <div class="relative group">
+                    <div
+                        class="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white/10 overflow-hidden bg-zinc-800 shadow-2xl relative"
+                    >
+                        {
+                            profile?.avatar_url ? (
+                                <img
+                                    src={profile.avatar_url}
+                                    alt={profile.full_name}
+                                    class="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-700">
+                                    <span class="text-5xl font-bold text-white uppercase">
+                                        {profile?.full_name?.charAt(0) ||
+                                            user.email?.charAt(0)}
+                                    </span>
+                                </div>
+                            )
+                        }
+                    </div>
+                </div>
+
+                <div class="flex-1 text-center md:text-left">
+                    <div
+                        class="flex flex-col md:flex-row md:items-center gap-3 mb-2"
+                    >
+                        <h1
+                            class="text-3xl md:text-4xl font-bold text-white tracking-tight"
+                        >
+                            {profile?.full_name || "New Explorer"}
+                        </h1>
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-bold text-blue-400 uppercase tracking-widest self-center md:self-auto"
+                        >
+                            {profile?.role || "User"}
+                        </span>
+                    </div>
+                    <p class="text-zinc-400 text-lg mb-4 italic">
+                        "{
+                            profile?.bio ||
+                                "No bio yet. Add something about yourself!"
+                        }"
+                    </p>
+
+                    <div
+                        class="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-zinc-500"
+                    >
+                        <div class="flex items-center gap-2">
+                            <Mail size={16} class="text-zinc-600" />
+                            {user.email}
+                        </div>
+                        {
+                            profile?.location && (
+                                <div class="flex items-center gap-2">
+                                    <MapPin size={16} class="text-zinc-600" />
+                                    Barcelona, ES
+                                </div>
+                            )
+                        }
+                        <div class="flex items-center gap-2">
+                            <Shield size={16} class="text-zinc-600" />
+                            Verified Account
+                        </div>
+                    </div>
+                </div>
+
+                <button
+                    id="toggle-edit"
+                    class="px-6 py-3 rounded-xl bg-white text-black font-bold text-sm uppercase tracking-wider hover:bg-zinc-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:scale-105"
+                >
+                    Edit Profile
+                </button>
+            </div>
+        </div>
+
+        <!-- Edit Form (Hidden by default) -->
+        <div
+            id="edit-section"
+            class="hidden animate-in fade-in slide-in-from-top-4 duration-500"
+        >
+            <div
+                class="bg-zinc-900 border border-white/5 rounded-3xl p-8 shadow-2xl"
+            >
+                <div class="flex items-center gap-3 mb-8">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center"
+                    >
+                        <User size={20} class="text-blue-500" />
+                    </div>
+                    <h2 class="text-xl font-bold text-white">
+                        Profile Details
+                    </h2>
+                </div>
+
+                <form id="profile-edit-form" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-medium text-zinc-400 ml-1"
+                                >Full Name</label
+                            >
+                            <input
+                                type="text"
+                                name="full_name"
+                                value={profile?.full_name || ""}
+                                placeholder="Your full name"
+                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                                required
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-medium text-zinc-400 ml-1"
+                                >Username</label
+                            >
+                            <div class="relative">
+                                <AtSign
+                                    size={16}
+                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
+                                />
+                                <input
+                                    type="text"
+                                    name="username"
+                                    value={profile?.username || ""}
+                                    placeholder="username"
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-zinc-400 ml-1"
+                            >Avatar URL</label
+                        >
+                        <div class="relative">
+                            <Camera
+                                size={16}
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
+                            />
+                            <input
+                                type="url"
+                                name="avatar_url"
+                                value={profile?.avatar_url || ""}
+                                placeholder="https://example.com/photo.jpg"
+                                class="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-zinc-400 ml-1"
+                            >Bio</label
+                        >
+                        <textarea
+                            name="bio"
+                            rows="4"
+                            placeholder="Tell the community about yourself..."
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all resize-none"
+                            >{profile?.bio || ""}</textarea
+                        >
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <button
+                            type="submit"
+                            class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-600/20"
+                        >
+                            Save Changes
+                        </button>
+                        <button
+                            type="button"
+                            id="cancel-edit"
+                            class="px-8 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition-all"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</DashboardLayout>
+
+<script>
+    import { actions } from "astro:actions";
+
+    const toggleBtn = document.getElementById("toggle-edit");
+    const cancelBtn = document.getElementById("cancel-edit");
+    const editSection = document.getElementById("edit-section");
+    const form = document.getElementById(
+        "profile-edit-form",
+    ) as HTMLFormElement;
+
+    toggleBtn?.addEventListener("click", () => {
+        editSection?.classList.toggle("hidden");
+        toggleBtn.classList.add("hidden");
+    });
+
+    cancelBtn?.addEventListener("click", () => {
+        editSection?.classList.add("hidden");
+        toggleBtn?.classList.remove("hidden");
+    });
+
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = {
+            full_name: formData.get("full_name") as string,
+            username: formData.get("username") as string,
+            bio: formData.get("bio") as string,
+            avatar_url: (formData.get("avatar_url") as string) || "",
+        };
+
+        const { data: updatedProfile, error } =
+            await actions.updateProfile(data);
+
+        if (error) {
+            alert("Error updating profile: " + error.message);
+        } else {
+            // Show success message and reload or update UI
+            alert("Profile updated successfully!");
+            window.location.reload();
+        }
+    });
+</script>

@@ -234,3 +234,28 @@ CREATE POLICY "Users can view own notifications" ON public.notifications FOR SEL
 -- Portfolios: Authenticated uploads
 -- create policy "Authenticated users can upload portfolio" on storage.objects for insert with check (bucket_id = 'portfolios' and auth.role() = 'authenticated');
 
+-- OFFERS
+CREATE TABLE IF NOT EXISTS public.offers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    artist_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    discount_percentage INTEGER,
+    price INTEGER,
+    image_url TEXT,
+    valid_until TIMESTAMPTZ,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- OFFERS RLS
+ALTER TABLE public.offers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Offers are viewable by everyone" ON public.offers FOR SELECT USING (true);
+CREATE POLICY "Artists can manage own offers" ON public.offers FOR ALL USING (auth.uid() = artist_id);
+
+-- UPDATED POLICIES
+-- Allow public viewing of open dossiers
+CREATE POLICY "Open dossiers are viewable by everyone" ON public.dossiers FOR SELECT USING (status = 'open');
+
+

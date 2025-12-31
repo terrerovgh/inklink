@@ -1,0 +1,76 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { supabase } from "../../lib/supabase";
+import { MapPin, ArrowRight } from "lucide-react";
+
+// Fetch Studios
+const { data: studios } = await supabase.from("studios").select("*").limit(50);
+
+const studioList = (studios || []).map((studio) => ({
+    id: studio.id,
+    name: studio.name,
+    slug: studio.slug,
+    avatar: studio.avatar_url || "https://via.placeholder.com/150",
+    cover: studio.cover_url || "https://via.placeholder.com/800x400",
+    location:
+        [studio.city, studio.country].filter(Boolean).join(", ") || "Cuba",
+    description: studio.description || "No description available.",
+}));
+---
+
+<Layout title="Studios | InkLink">
+    <main class="min-h-screen bg-zinc-50 dark:bg-zinc-950 pt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <header class="mb-12 text-center">
+                <h1
+                    class="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white mb-4"
+                >
+                    Top Studios
+                </h1>
+                <p
+                    class="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto"
+                >
+                    Discover premium tattoo studios and collectives.
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {
+                    studioList.map((studio) => (
+                        <a
+                            href={`/studio/${studio.slug}`}
+                            class="group block bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-zinc-200 dark:border-zinc-800"
+                        >
+                            <div class="aspect-[16/9] overflow-hidden bg-zinc-100 relative">
+                                <img
+                                    src={studio.cover || studio.avatar}
+                                    alt={studio.name}
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                                <div class="absolute bottom-0 left-0 p-6 w-full">
+                                    <h3 class="text-2xl font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                                        {studio.name}
+                                    </h3>
+                                    <div class="flex items-center text-zinc-300 text-sm">
+                                        <MapPin size={14} class="mr-1" />
+                                        {studio.location}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-zinc-600 dark:text-zinc-400 text-sm line-clamp-2 mb-4">
+                                    {studio.description}
+                                </p>
+                                <span class="inline-flex items-center text-blue-600 dark:text-blue-400 font-semibold text-sm group-hover:translate-x-1 transition-transform">
+                                    Visit Studio{" "}
+                                    <ArrowRight size={16} class="ml-1" />
+                                </span>
+                            </div>
+                        </a>
+                    ))
+                }
+            </div>
+        </div>
+    </main>
+</Layout>

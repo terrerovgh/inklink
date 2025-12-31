@@ -1,0 +1,151 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import { supabase } from "../../lib/supabase";
+import { Calendar as CalendarIcon, MessageCircle, Clock } from "lucide-react";
+
+const { user } = Astro.locals;
+
+// Fetch Bookings (As Artist or Client)
+// We need to fetch bookings where user is client OR artist. Or just fetch all and filter.
+// Supabase OR syntax: or=(client_id.eq.uuid,artist_id.eq.uuid)
+const { data: bookings } = await supabase
+    .from("bookings")
+    .select(
+        `
+        *,
+        dossier:dossier_id (title),
+        client:client_id (full_name, avatar_url),
+        artist:artist_id (full_name, avatar_url)
+    `,
+    )
+    .or(`client_id.eq.${user?.id},artist_id.eq.${user?.id}`)
+    .order("created_at", { ascending: false });
+
+const activeBookings =
+    bookings?.filter((b) =>
+        ["scheduled", "deposit_paid", "approved"].includes(b.status),
+    ) || [];
+const pendingRequests = bookings?.filter((b) => b.status === "pending") || [];
+const inquiries = bookings?.filter((b) => b.status === "inquiry") || [];
+---
+
+<DashboardLayout title="My Bookings">
+    <div class="space-y-12">
+        {/* Inquiries */}
+        {
+            inquiries.length > 0 && (
+                <section>
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <MessageCircle size={20} /> Inquiries
+                    </h2>
+                    <div class="grid gap-4">
+                        {inquiries.map((booking) => (
+                            <div
+                                key={booking.id}
+                                class="bg-card border border-border p-4 rounded-xl flex justify-between items-center"
+                            >
+                                <div>
+                                    <h3 class="font-bold">
+                                        {booking.dossier?.title ||
+                                            "General Inquiry"}
+                                    </h3>
+                                    <p class="text-sm text-muted-foreground">
+                                        From:{" "}
+                                        {booking.client?.full_name || "User"}
+                                    </p>
+                                </div>
+                                <a
+                                    href={`/dashboard/messages?booking_id=${booking.id}`}
+                                    class="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium"
+                                >
+                                    View Chat
+                                </a>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )
+        }
+
+        {/* Pending Requests */}
+        {
+            pendingRequests.length > 0 && (
+                <section>
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <Clock size={20} /> Pending Requests
+                    </h2>
+                    <div class="grid gap-4">
+                        {pendingRequests.map((booking) => (
+                            <div
+                                key={booking.id}
+                                class="bg-card border border-border p-4 rounded-xl flex justify-between items-center"
+                            >
+                                <div>
+                                    <h3 class="font-bold">
+                                        {booking.dossier?.title ||
+                                            "Booking Request"}
+                                    </h3>
+                                    <p class="text-sm text-muted-foreground">
+                                        Status:{" "}
+                                        <span class="capitalize">
+                                            {booking.status}
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <a
+                                        href={`/dashboard/messages?booking_id=${booking.id}`}
+                                        class="px-3 py-1 bg-secondary text-secondary-foreground rounded text-sm"
+                                    >
+                                        Chat
+                                    </a>
+                                    {/* Add Approve/Decline actions here if Artist */}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )
+        }
+
+        {/* Active Bookings */}
+        <section>
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <CalendarIcon size={20} /> Scheduled & Active
+            </h2>
+            {
+                activeBookings.length > 0 ? (
+                    <div class="grid gap-4">
+                        {activeBookings.map((booking) => (
+                            <div
+                                key={booking.id}
+                                class="bg-card border border-border p-4 rounded-xl flex justify-between items-center"
+                            >
+                                <div>
+                                    <h3 class="font-bold">
+                                        {booking.dossier?.title || "Booking"}
+                                    </h3>
+                                    <p class="text-sm text-muted-foreground">
+                                        Date:{" "}
+                                        {booking.date
+                                            ? new Date(
+                                                  booking.date,
+                                              ).toLocaleDateString()
+                                            : "TBD"}
+                                    </p>
+                                </div>
+                                <span class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs font-bold capitalize">
+                                    {booking.status.replace("_", " ")}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div class="text-muted-foreground italic">
+                        No active bookings.
+                    </div>
+                )
+            }
+        </section>
+    </div>
+</DashboardLayout>

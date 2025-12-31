@@ -1,0 +1,18 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+import OfferManager from "../../../components/dashboard/OfferManager";
+import { supabase } from "../../../lib/supabase";
+
+const { user } = Astro.locals;
+
+// Fetch Artist's Offers
+const { data: offers } = await supabase
+    .from("offers")
+    .select("*")
+    .eq("artist_id", user?.id || "")
+    .order("created_at", { ascending: false });
+---
+
+<DashboardLayout title="My Special Offers">
+    <OfferManager client:load initialItems={offers || []} />
+</DashboardLayout>

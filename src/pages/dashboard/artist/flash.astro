@@ -1,0 +1,18 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+import FlashManager from "../../../components/dashboard/FlashManager";
+import { supabase } from "../../../lib/supabase";
+
+const { user } = Astro.locals;
+
+// Fetch Artist's Flash
+const { data: flashItems } = await supabase
+    .from("flash_tattoos")
+    .select("*")
+    .eq("artist_id", user?.id || "")
+    .order("created_at", { ascending: false });
+---
+
+<DashboardLayout title="My Flash Tattoos">
+    <FlashManager client:load initialItems={flashItems || []} />
+</DashboardLayout>

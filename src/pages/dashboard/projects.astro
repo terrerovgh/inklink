@@ -1,0 +1,83 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import { supabase } from "../../lib/supabase";
+import { Plus, FolderOpen } from "lucide-react";
+import type { Dossier } from "../../types/database";
+
+const { user } = Astro.locals;
+
+// Fetch User's Dossiers
+const { data, error } = await supabase
+    .from("dossiers")
+    .select("*")
+    .eq("user_id", user?.id || "")
+    .order("created_at", { ascending: false });
+
+const dossiers: Dossier[] = (data as any) || [];
+---
+
+<DashboardLayout title="My Projects">
+    <div class="space-y-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-2xl font-bold">My Projects</h2>
+                <p class="text-muted-foreground">
+                    Manage yourtattoo ideas and open projects.
+                </p>
+            </div>
+            <a
+                href="/dashboard/create-project"
+                class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity"
+            >
+                <Plus size={18} /> New Project
+            </a>
+        </div>
+
+        {
+            dossiers && dossiers.length > 0 ? (
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {dossiers.map((project) => (
+                        <div class="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-bold text-lg">
+                                    {project.title}
+                                </h3>
+                                <span
+                                    class={`px-2 py-1 rounded-full text-xs font-medium capitalize 
+                                ${
+                                    project.status === "open"
+                                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                        : project.status === "completed"
+                                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                          : "bg-muted text-muted-foreground"
+                                }`}
+                                >
+                                    {project.status}
+                                </span>
+                            </div>
+                            <p class="text-sm text-muted-foreground line-clamp-2 mb-4">
+                                {project.description}
+                            </p>
+                            <div class="flex items-center text-xs text-muted-foreground">
+                                <FolderOpen size={14} className="mr-1" />
+                                {new Date(
+                                    project.created_at,
+                                ).toLocaleDateString()}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div class="border-2 border-dashed border-border rounded-xl p-12 text-center text-muted-foreground">
+                    <p>You haven't posted any projects yet.</p>
+                    <a
+                        href="/dashboard/create-project"
+                        class="text-primary hover:underline mt-2 inline-block"
+                    >
+                        Start your first project
+                    </a>
+                </div>
+            )
+        }
+    </div>
+</DashboardLayout>

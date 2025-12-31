@@ -1,0 +1,101 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { FlashGrid } from "../../components/market/FlashGrid";
+import { OfferGrid } from "../../components/market/OfferGrid";
+import { ProjectList } from "../../components/market/ProjectList";
+import { supabase } from "../../lib/supabase";
+
+// 1. Fetch Flash Tattoos
+const { data: flashTattoos } = await supabase
+    .from("flash_tattoos")
+    .select("*")
+    .eq("is_available", true)
+    .limit(20);
+
+// 2. Fetch Active Offers
+const { data: offers } = await supabase
+    .from("offers")
+    .select("*")
+    .eq("is_active", true)
+    .limit(20);
+
+// 3. Fetch Open Projects (Dossiers)
+const { data: projects } = await supabase
+    .from("dossiers")
+    .select("*")
+    .eq("status", "open")
+    .limit(20);
+---
+
+<Layout title="InkLink Market - Flash, Offers & Projects">
+    <main class="min-h-screen bg-background pt-24 pb-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <header class="mb-12">
+                <h1
+                    class="text-4xl md:text-5xl font-black text-foreground mb-4"
+                >
+                    The <span class="text-primary">Market</span>
+                </h1>
+                <p class="text-xl text-muted-foreground max-w-2xl">
+                    Discover exclusive flash designs, limited-time offers, and
+                    community projects waiting for an artist.
+                </p>
+            </header>
+
+            {/* Tabs / Sections */}
+            <div class="space-y-20">
+                {/* 1. Flash Tattoos */}
+                <section>
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-2xl font-bold flex items-center gap-3">
+                            Fresh Flash <span
+                                class="text-xs font-normal px-2 py-1 bg-muted rounded-full text-muted-foreground"
+                                >{flashTattoos?.length || 0}</span
+                            >
+                        </h2>
+                        <a
+                            href="/market/flash"
+                            class="text-primary font-medium hover:underline"
+                            >View All</a
+                        >
+                    </div>
+                    <FlashGrid items={flashTattoos || []} client:visible />
+                </section>
+
+                {/* 2. Special Offers */}
+                <section>
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-2xl font-bold flex items-center gap-3">
+                            Special Offers <span
+                                class="text-xs font-normal px-2 py-1 bg-muted rounded-full text-muted-foreground"
+                                >{offers?.length || 0}</span
+                            >
+                        </h2>
+                    </div>
+                    <OfferGrid items={offers || []} client:visible />
+                </section>
+
+                {/* 3. Community Projects */}
+                <section>
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-2xl font-bold flex items-center gap-3">
+                            Community Projects <span
+                                class="text-xs font-normal px-2 py-1 bg-muted rounded-full text-muted-foreground"
+                                >{projects?.length || 0}</span
+                            >
+                        </h2>
+                        <div class="flex gap-4">
+                            <a
+                                href="/dashboard/create-project"
+                                class="hidden md:inline-flex items-center justify-center px-4 py-2 bg-foreground text-background rounded-lg font-bold hover:opacity-90 transition-opacity text-sm"
+                            >
+                                Post a Project
+                            </a>
+                        </div>
+                    </div>
+                    <ProjectList items={projects || []} client:visible />
+                </section>
+            </div>
+        </div>
+    </main>
+</Layout>

@@ -1,23 +1,173 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { ShopRecommendations } from "../../components/home/ShopRecommendations";
+import { AffiliateCard } from "../../components/shared/AffiliateCard";
+import { supabase } from "../../lib/supabase";
+import type { Product } from "../../types/database";
+
+// Fetch "Pro Gear" (Affiliates) - assuming category 'pro_gear' or just 'gear'
+const { data: gearData } = await supabase
+    .from("products")
+    .select("*")
+    .eq("category", "gear") // Adjust category as needed
+    .limit(3);
+
+const proGear =
+    gearData && gearData.length > 0
+        ? gearData
+        : [
+              {
+                  name: "Bishop Power Wand Packer",
+                  price: 1099.0,
+                  image_url:
+                      "https://m.media-amazon.com/images/I/51s+jGZz0IL._AC_SL1000_.jpg",
+                  affiliate_url: "https://amazon.com",
+                  is_recommended: true,
+              },
+              {
+                  name: "Kwudron Cartridge Needles",
+                  price: 45.0,
+                  image_url:
+                      "https://m.media-amazon.com/images/I/71wwY-a7+AL._AC_SL1500_.jpg",
+                  affiliate_url: "https://amazon.com",
+                  is_recommended: true,
+              },
+              {
+                  name: "Critical Atom X Power Supply",
+                  price: 249.99,
+                  image_url:
+                      "https://m.media-amazon.com/images/I/61j6e3+5dEL._AC_SL1200_.jpg",
+                  affiliate_url: "https://amazon.com",
+                  is_recommended: false,
+              },
+          ];
+
+// Fetch "Merch"
+const { data: merchData } = await supabase
+    .from("products")
+    .select("*")
+    .eq("category", "merch")
+    .limit(3);
+
+const merch =
+    merchData && merchData.length > 0
+        ? merchData
+        : [
+              {
+                  name: "InkLink Official Hoodie",
+                  price: 59.99,
+                  image_url:
+                      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&q=80",
+                  affiliate_url: "/shop/merch/hoodie",
+                  is_recommended: false,
+              },
+              {
+                  name: "Artist Snapback Cap",
+                  price: 29.99,
+                  image_url:
+                      "https://images.unsplash.com/photo-1588850561407-ed78c282e89d?w=600&q=80",
+                  affiliate_url: "/shop/merch/cap",
+                  is_recommended: false,
+              },
+          ];
+
+const schema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: [
+        ...proGear.map((item, index) => ({
+            "@type": "Product",
+            position: index + 1,
+            name: item.name,
+            image: item.image_url,
+            offers: {
+                "@type": "Offer",
+                price: item.price,
+                priceCurrency: "USD",
+            },
+        })),
+        ...merch.map((item, index) => ({
+            "@type": "Product",
+            position: proGear.length + index + 1,
+            name: item.name,
+            image: item.image_url,
+            offers: {
+                "@type": "Offer",
+                price: item.price,
+                priceCurrency: "USD",
+            },
+        })),
+    ],
+});
 ---
 
 <Layout title="InkLink Shop - Premium Aftercare & Merch">
-    <main class="min-h-screen bg-zinc-950 pt-20">
-        <div class="py-12">
-            <div
-                class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 text-center text-white"
-            >
-                <h1 class="text-4xl md:text-5xl font-black mb-4">
-                    Official Shop
+    <head slot="head">
+        <script type="application/ld+json" set:html={schema} />
+    </head>
+    <main class="min-h-screen bg-zinc-950 pt-20 pb-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <header class="text-center mb-16">
+                <h1
+                    class="text-4xl md:text-6xl font-black mb-6 text-white tracking-tight"
+                >
+                    InkLink <span
+                        class="bg-gradient-to-r from-amber-400 to-orange-600 bg-clip-text text-transparent"
+                        >Market</span
+                    >
                 </h1>
-                <p class="text-lg text-zinc-400 max-w-2xl mx-auto">
-                    Curated aftercare products and exclusive InkLink
-                    merchandise.
+                <p class="text-xl text-zinc-400 max-w-2xl mx-auto">
+                    Hand-picked equipment for professionals and exclusive
+                    merchandise for true ink lovers.
                 </p>
-            </div>
-            <ShopRecommendations />
+            </header>
+
+            {/* Section 1: Pro Gear (Affiliates) */}
+            <section class="mb-20">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold text-white mb-2">
+                            Pro Gear
+                        </h2>
+                        <p class="text-zinc-500">
+                            Trusted tools from industry leaders
+                        </p>
+                    </div>
+                    <div class="h-px flex-1 bg-zinc-800 ml-8"></div>
+                </div>
+
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                >
+                    {
+                        proGear.map((product) => (
+                            <AffiliateCard client:visible product={product} />
+                        ))
+                    }
+                </div>
+            </section>
+
+            {/* Section 2: InkLink Merch (Dropshipping) */}
+            <section>
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold text-white mb-2">
+                            Official Merch
+                        </h2>
+                        <p class="text-zinc-500">Wear your passion</p>
+                    </div>
+                    <div class="h-px flex-1 bg-zinc-800 ml-8"></div>
+                </div>
+
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                >
+                    {
+                        merch.map((product) => (
+                            <AffiliateCard client:visible product={product} />
+                        ))
+                    }
+                </div>
+            </section>
         </div>
     </main>
 </Layout>

@@ -1,6 +1,28 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { MarketplaceSection } from "../../components/home/MarketplaceSection";
+import { supabase } from "../../lib/supabase";
+
+// Fetch Marketplace Items
+const { data: marketData } = await supabase
+    .from("products")
+    .select("*")
+    .eq("category", "gear") // Reusing gear category or similar
+    .limit(20);
+
+// Fallback logic inside map or pre-process
+const items =
+    marketData && marketData.length > 0
+        ? marketData.map((item: any) => ({
+              id: item.id,
+              title: item.name,
+              price: item.price,
+              currency: item.currency || "USD",
+              image: item.image_url,
+              location: "Havana", // Default
+              seller: "InkLink Market", // Default
+          }))
+        : []; // MarketplaceSection handles empty if we want, or we can pass some mocks if we prefer consistent look
 ---
 
 <Layout title="Marketplace - InkLink">
@@ -21,7 +43,7 @@ import { MarketplaceSection } from "../../components/home/MarketplaceSection";
                     art.
                 </p>
             </div>
-            <MarketplaceSection />
+            <MarketplaceSection items={items} />
         </div>
     </main>
 </Layout>

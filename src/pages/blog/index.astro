@@ -1,6 +1,20 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { BlogSection } from "../../components/home/BlogSection";
+import { supabase } from "../../lib/supabase";
+import type { BlogPost } from "../../types/database";
+
+const { data: posts, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("published", true)
+    .order("created_at", { ascending: false });
+
+if (error) {
+    console.error("Error fetching blog posts:", error);
+}
+
+const blogPosts = (posts as BlogPost[]) || [];
 ---
 
 <Layout title="InkLink Blog - Tattoo Culture & Tips">
@@ -22,8 +36,7 @@ import { BlogSection } from "../../components/home/BlogSection";
                 </p>
             </div>
 
-            {/* Reusing BlogSection for the feed logic for now */}
-            <BlogSection />
+            <BlogSection client:visible posts={blogPosts} />
         </div>
     </main>
 </Layout>

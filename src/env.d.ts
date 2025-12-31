@@ -5,6 +5,7 @@ type Runtime = import("@astrojs/node").Runtime;
 declare namespace App {
     interface Locals extends Runtime {
         user: import("@supabase/supabase-js").User | null;
+        profile: any | null; // Database profile with role
     }
 }
 

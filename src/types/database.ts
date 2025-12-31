@@ -1,5 +1,5 @@
 export type AppRole = 'admin' | 'editor' | 'artist' | 'studio_owner' | 'user';
-export type BookingStatus = 'pending' | 'approved' | 'deposit_paid' | 'scheduled' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'approved' | 'deposit_paid' | 'scheduled' | 'completed' | 'cancelled' | 'inquiry';
 export type DossierStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'archived';
 
 export interface Json {
@@ -104,6 +104,20 @@ export interface FlashTattoo {
   created_at: string;
 }
 
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  image_url: string | null;
+  affiliate_url: string | null;
+  is_recommended: boolean;
+  category: string;
+  created_at: string;
+}
+
 export interface MarketListing {
   id: string;
   dossier_id: string;
@@ -163,4 +177,18 @@ export interface ProfileStyle {
 export interface DossierStyle {
   dossier_id: string;
   style_id: string;
+}
+
+export interface Offer {
+  id: string;
+  artist_id: string;
+  title: string;
+  description: string | null;
+  discount_percentage: number | null;
+  price: number | null;
+  image_url: string | null;
+  valid_until: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }

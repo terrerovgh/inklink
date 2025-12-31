@@ -1,5 +1,5 @@
 export type * from '../types/database';
-import { type Profile, type Studio, type Dossier, type Booking, type StudioMember } from '../types/database';
+import { type Profile, type Studio, type Dossier, type Booking, type StudioMember, type Product } from '../types/database';
 
 // Helper to omit generated fields
 type DbInsert<T> = Omit<T, 'id' | 'created_at' | 'updated_at'>;
@@ -13,6 +13,7 @@ export interface Database {
             studio_members: { Row: StudioMember; Insert: DbInsert<StudioMember>; Update: DbUpdate<StudioMember> };
             dossiers: { Row: Dossier; Insert: DbInsert<Dossier>; Update: DbUpdate<Dossier> };
             bookings: { Row: Booking; Insert: DbInsert<Booking>; Update: DbUpdate<Booking> };
+            products: { Row: Product; Insert: DbInsert<Product>; Update: DbUpdate<Product> };
         }
         Views: {
             [_ in never]: never

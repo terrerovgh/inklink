@@ -52,6 +52,54 @@ import Layout from "../../layouts/Layout.astro";
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-foreground"
+                        >I am a...</label
+                    >
+                    <div class="mt-2 grid grid-cols-3 gap-3">
+                        <label class="cursor-pointer">
+                            <input
+                                type="radio"
+                                name="role"
+                                value="user"
+                                class="peer sr-only"
+                                checked
+                            />
+                            <div
+                                class="rounded-md border border-input bg-background px-3 py-2 text-center text-sm font-medium hover:bg-muted peer-checked:border-primary peer-checked:text-primary peer-checked:ring-1 peer-checked:ring-primary"
+                            >
+                                Client
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input
+                                type="radio"
+                                name="role"
+                                value="artist"
+                                class="peer sr-only"
+                            />
+                            <div
+                                class="rounded-md border border-input bg-background px-3 py-2 text-center text-sm font-medium hover:bg-muted peer-checked:border-primary peer-checked:text-primary peer-checked:ring-1 peer-checked:ring-primary"
+                            >
+                                Artist
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input
+                                type="radio"
+                                name="role"
+                                value="studio_owner"
+                                class="peer sr-only"
+                            />
+                            <div
+                                class="rounded-md border border-input bg-background px-3 py-2 text-center text-sm font-medium hover:bg-muted peer-checked:border-primary peer-checked:text-primary peer-checked:ring-1 peer-checked:ring-primary"
+                            >
+                                Studio Owner
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
                     <label
                         for="password"
                         class="block text-sm font-medium text-foreground"
@@ -122,6 +170,7 @@ import Layout from "../../layouts/Layout.astro";
         const email = formData.get("email") as string;
         const password = formData.get("password") as string;
         const fullName = formData.get("fullName") as string;
+        const role = formData.get("role") as string;
 
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -129,6 +178,7 @@ import Layout from "../../layouts/Layout.astro";
             options: {
                 data: {
                     full_name: fullName,
+                    role: role,
                 },
             },
         });

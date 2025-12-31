@@ -4,6 +4,134 @@ import { TattooFeed } from "../components/home/TattooFeed";
 import { BlogSection } from "../components/home/BlogSection";
 import { MarketplaceSection } from "../components/home/MarketplaceSection";
 import { ShopRecommendations } from "../components/home/ShopRecommendations";
+import { supabase } from "../lib/supabase";
+import type { FlashTattoo, BlogPost, Product } from "../types/database";
+
+// Fetch Flash Tattoos (Projects)
+const { data: flashData } = await supabase
+	.from("flash_tattoos")
+	.select("*, profiles!inner(full_name, avatar_url, city, country)")
+	.eq("is_available", true)
+	.order("created_at", { ascending: false })
+	.limit(6);
+
+const projects = (flashData || []).map((flash: any) => ({
+	id: flash.id,
+	title: flash.title,
+	description: flash.description || "",
+	artist: {
+		name: flash.profiles?.full_name || "Unknown Artist",
+		avatar: flash.profiles?.avatar_url || "https://via.placeholder.com/150",
+		location:
+			[flash.profiles?.city, flash.profiles?.country]
+				.filter(Boolean)
+				.join(", ") || "Cuba",
+	},
+	media: [{ type: "image", url: flash.image_url }] as any[],
+	tags: ["flash", "tattoo"], // TODO: Add real tags if available
+}));
+
+// Fetch Blog Posts
+const { data: blogData } = await supabase
+	.from("blog_posts")
+	.select("*")
+	.eq("published", true)
+	.order("created_at", { ascending: false })
+	.limit(3);
+
+const posts = (blogData as BlogPost[]) || [];
+
+// Fetch Marketplace Items (Simulated with Products or mock fallback if empty)
+// Assuming products table has a 'category' or we just fetch generic products for now
+const { data: marketData } = await supabase
+	.from("products")
+	.select("*")
+	.eq("category", "gear") // Assuming 'gear' category exists for marketplace
+	.limit(4);
+
+// Fallback for Marketplace if DB is empty to keep UI looking good during dev
+const marketItems =
+	marketData && marketData.length > 0
+		? marketData.map((item: any) => ({
+				id: item.id,
+				title: item.name,
+				price: item.price,
+				currency: item.currency || "USD",
+				image: item.image_url,
+				location: "Havana", // Default for now
+				seller: "InkLink Market", // Default
+			}))
+		: [
+				// Keep a few mocks if DB is empty so page isn't broken
+				{
+					id: "mock1",
+					title: "Vintage Coil Machine",
+					price: 150,
+					currency: "USD",
+					image: "https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=600&q=80",
+					location: "Havana",
+					seller: "Old School Supplies",
+				},
+				{
+					id: "mock2",
+					title: "Unopened Ink Set",
+					price: 85,
+					currency: "USD",
+					image: "https://images.unsplash.com/photo-1598371839696-5c5bbcece707?w=600&q=80",
+					location: "Matanzas",
+					seller: "Pro Ink",
+				},
+			];
+
+// Fetch Shop Recommendations
+const { data: shopData } = await supabase
+	.from("products")
+	.select("*")
+	.neq("category", "gear") // Everything else is shop
+	.limit(3);
+
+const shopProducts =
+	shopData && shopData.length > 0
+		? shopData.map((item: any) => ({
+				id: item.id,
+				title: item.name,
+				price: item.price,
+				rating: 5.0, // Mock
+				reviews: 0, // Mock
+				image: item.image_url,
+				tag: item.is_recommended ? "Recommended" : null,
+			}))
+		: [
+				// Keeps mocks if DB empty
+				{
+					id: "s1",
+					title: "InkLink Aftercare Balm",
+					price: 15,
+					rating: 4.8,
+					reviews: 120,
+					image: "https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=600&q=80",
+					tag: "Best Seller",
+				},
+				{
+					id: "s2",
+					title: "Daily Moisturizer SPF 30",
+					price: 22,
+					rating: 4.9,
+					reviews: 85,
+					image: "https://images.unsplash.com/photo-1598371839696-5c5bbcece707?w=600&q=80",
+					tag: "New",
+				},
+				{
+					id: "s3",
+					title: "Vibrant Color Enhancer",
+					price: 18,
+					rating: 4.7,
+					reviews: 210,
+					image: "https://images.unsplash.com/photo-1590246130796-54238a2995bd?w=600&q=80",
+					tag: null,
+				},
+			];
+
 import MapWidget from "../components/dashboard/feed/MapWidget";
 ---
 
@@ -145,13 +273,13 @@ import MapWidget from "../components/dashboard/feed/MapWidget";
 		<div
 			class="relative bg-zinc-50 dark:bg-zinc-950 z-20 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]"
 		>
-			<TattooFeed client:load />
+			<TattooFeed client:load initialProjects={projects} />
 
-			<BlogSection />
+			<BlogSection posts={posts} />
 
-			<ShopRecommendations />
+			<ShopRecommendations products={shopProducts} />
 
-			<MarketplaceSection />
+			<MarketplaceSection items={marketItems} />
 		</div>
 	</div>
 </Layout>

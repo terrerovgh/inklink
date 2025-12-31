@@ -123,17 +123,26 @@ import Layout from "../../layouts/Layout.astro";
 
         if (error) {
             alert(error.message);
-        } else {
+        } else if (data.session) {
+            // Set session cookies for the server (Astro Middleware)
+            const expirationDate = new Date();
+            expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+            const expires = expirationDate.toUTCString();
+
+            document.cookie = `sb-access-token=${data.session.access_token}; Path=/; Expires=${expires}; SameSite=Lax;`;
+            document.cookie = `sb-refresh-token=${data.session.refresh_token}; Path=/; Expires=${expires}; SameSite=Lax;`;
+
             window.location.href = "/dashboard";
         }
     });
 
     googleBtn?.addEventListener("click", async () => {
-        await supabase.auth.signInWithOAuth({
+        const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
                 redirectTo: window.location.origin + "/dashboard",
             },
         });
+        if (error) alert(error.message);
     });
 </script>
