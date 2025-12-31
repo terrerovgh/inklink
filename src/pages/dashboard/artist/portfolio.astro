@@ -1,0 +1,189 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+import { supabase } from "../../../lib/supabase";
+import { actions } from "astro:actions";
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect("/auth/login");
+
+// Fetch Artist Profile
+const { data: artistProfileData, error } = await supabase
+    .from("profiles")
+    .select("*, artists(*)")
+    .eq("id", user.id)
+    .single();
+
+if (error || !artistProfileData) return Astro.redirect("/dashboard");
+
+const artistProfile = artistProfileData as any;
+
+// Check if user is artist
+if ((artistProfile.role as string)?.toLowerCase() !== "artist") {
+    // If not artist, maybe redirect or show message.
+    // But this page typically only linked for artists.
+    return Astro.redirect("/dashboard");
+}
+
+const artist = (artistProfile.artists as any)?.[0]; // Supabase returns array for 1:M, but effectively 1:1 here
+
+if (!artist) {
+    // If trigger failed or old user, maybe create one?
+    // ideally the trigger handles it.
+    // Show empty state
+}
+
+const result = Astro.getActionResult(actions.updateArtistPortfolio);
+---
+
+<DashboardLayout title="My Portfolio">
+    <div class="space-y-6">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">Artist Portfolio</h1>
+            <p class="text-muted-foreground">
+                Manage your public artist profile and portfolio settings.
+            </p>
+        </div>
+
+        {
+            result && !result.error && (
+                <div class="bg-green-500/10 text-green-500 p-4 rounded-lg">
+                    Portfolio updated successfully!
+                </div>
+            )
+        }
+        {
+            result && result.error && (
+                <div class="bg-destructive/10 text-destructive p-4 rounded-lg">
+                    Error: {result.error.message}
+                </div>
+            )
+        }
+
+        <form
+            method="POST"
+            action={actions.updateArtistPortfolio}
+            class="space-y-8 max-w-2xl"
+        >
+            <input type="hidden" name="id" value={artist?.id} />
+
+            <div class="space-y-4 bg-card border border-border p-6 rounded-xl">
+                <h2 class="text-xl font-semibold">Basic Info</h2>
+
+                <div class="grid gap-2">
+                    <label for="bio" class="text-sm font-medium">Bio</label>
+                    <textarea
+                        id="bio"
+                        name="bio"
+                        rows="4"
+                        class="w-full p-2 bg-background border border-input rounded-md"
+                        >{artistProfile.bio || ""}</textarea
+                    >
+                    <p class="text-xs text-muted-foreground">
+                        This bio is displayed on your public profile.
+                    </p>
+                </div>
+
+                <div class="grid gap-2">
+                    <label for="styles" class="text-sm font-medium"
+                        >Styles / Specialties</label
+                    >
+                    <input
+                        type="text"
+                        id="styles"
+                        name="styles"
+                        placeholder="e.g. Realism, Blackwork, Neotraditional"
+                        value={artist?.specialties?.join(", ") || ""}
+                        class="w-full p-2 bg-background border border-input rounded-md"
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        Comma separated values.
+                    </p>
+                </div>
+
+                <div class="grid gap-2">
+                    <label for="hourly_rate" class="text-sm font-medium"
+                        >Hourly Rate ($)</label
+                    >
+                    <input
+                        type="number"
+                        id="hourly_rate"
+                        name="hourly_rate"
+                        value={artist?.hourly_rate || ""}
+                        class="w-full p-2 bg-background border border-input rounded-md"
+                    />
+                </div>
+            </div>
+
+            <div class="space-y-4 bg-card border border-border p-6 rounded-xl">
+                <h2 class="text-xl font-semibold">Portfolio Settings</h2>
+
+                <div class="grid gap-2">
+                    <label for="portfolio_layout" class="text-sm font-medium"
+                        >Layout Template</label
+                    >
+                    <select
+                        id="portfolio_layout"
+                        name="portfolio_layout"
+                        class="w-full p-2 bg-background border border-input rounded-md"
+                    >
+                        <option
+                            value="grid"
+                            selected={artist?.portfolio_layout === "grid" ||
+                                artist?.portfolio_layout === "default"}
+                            >Grid (Default)</option
+                        >
+                        <option
+                            value="masonry"
+                            selected={artist?.portfolio_layout === "masonry"}
+                            >Masonry</option
+                        >
+                        <option
+                            value="carousel"
+                            selected={artist?.portfolio_layout === "carousel"}
+                            >Carousel</option
+                        >
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-4 bg-card border border-border p-6 rounded-xl">
+                <h2 class="text-xl font-semibold">Social Media</h2>
+
+                <div class="grid gap-2">
+                    <label for="website_url" class="text-sm font-medium"
+                        >Website URL</label
+                    >
+                    <input
+                        type="url"
+                        id="website_url"
+                        name="website_url"
+                        placeholder="https://yourwebsite.com"
+                        value={artist?.website_url || ""}
+                        class="w-full p-2 bg-background border border-input rounded-md"
+                    />
+                </div>
+
+                <div class="grid gap-2">
+                    <label for="instagram_url" class="text-sm font-medium"
+                        >Instagram URL</label
+                    >
+                    <input
+                        type="url"
+                        id="instagram_url"
+                        name="instagram_url"
+                        placeholder="https://instagram.com/yourprofile"
+                        value={artist?.instagram_url || ""}
+                        class="w-full p-2 bg-background border border-input rounded-md"
+                    />
+                </div>
+            </div>
+
+            <button
+                type="submit"
+                class="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+            >
+                Save Changes
+            </button>
+        </form>
+    </div>
+</DashboardLayout>

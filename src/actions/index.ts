@@ -360,7 +360,7 @@ export const server = {
             if (!user) throw new Error("Unauthorized");
 
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-            if ((profile as any)?.role !== 'admin') throw new Error("Unauthorized: Admin only");
+            if ((profile as any)?.role?.toLowerCase() !== 'admin') throw new Error("Unauthorized: Admin only");
 
             const { error } = await supabase
                 .from('bookings')
@@ -368,6 +368,59 @@ export const server = {
                 .eq('id', input.booking_id);
 
             if (error) throw new Error(error.message);
+            return { success: true };
+        }
+    }),
+    updateArtistPortfolio: defineAction({
+        accept: 'json',
+        input: z.object({
+            id: z.string(), // Artist ID (from artists table, not profile id directly, though linked)
+            bio: z.string().optional(),
+            styles: z.string().optional(), // Comma separated to array
+            hourly_rate: z.number().optional(),
+            website_url: z.string().url().optional().or(z.literal("")),
+            instagram_url: z.string().url().optional().or(z.literal("")),
+            portfolio_layout: z.string().optional()
+        }),
+        handler: async (input, context) => {
+            const { data: { user } } = await supabase.auth.getUser(context.cookies.get('sb-access-token')?.value);
+            if (!user) throw new Error("Unauthorized");
+
+            // Verify ownership: Get artist record for this user
+            const { data: artist } = await supabase
+                .from('artists')
+                .select('id')
+                .eq('profile_id', user.id)
+                .single();
+
+            if (!artist || artist.id !== input.id) {
+                // If the user tries to update an artist record that isn't theirs
+                throw new Error("Unauthorized: You can only edit your own portfolio");
+            }
+
+            // Update Artists Table
+            const { error: artistError } = await supabase
+                .from('artists')
+                .update({
+                    hourly_rate: input.hourly_rate,
+                    specialties: input.styles ? input.styles.split(',').map(s => s.trim()) : undefined,
+                    website_url: input.website_url || null,
+                    instagram_url: input.instagram_url || null,
+                    portfolio_layout: input.portfolio_layout
+                } as any)
+                .eq('id', input.id);
+
+            if (artistError) throw new Error(artistError.message);
+
+            // Update Profiles Table (Bio)
+            if (input.bio !== undefined) {
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .update({ bio: input.bio } as any)
+                    .eq('id', user.id);
+                if (profileError) throw new Error(profileError.message);
+            }
+
             return { success: true };
         }
     })
